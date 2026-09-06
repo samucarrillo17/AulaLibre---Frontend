@@ -1,19 +1,37 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { BookPlus, GraduationCap, LayoutDashboard, LogOut } from "lucide-react"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { BookPlus, GraduationCap, LayoutDashboard, LogOut } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { logoutAction } from "@/server/auth/action";
 
 const NAV = [
-  { label: "Registrar Asignatura", shortLabel: "Registrar", icon: BookPlus, href: "/admin/registrar" },
-  { label: "Asignaturas registradas", shortLabel: "Ver todas", icon: LayoutDashboard, href: "/admin/asignaturas" },
-]
-
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+  {
+    label: "Registrar Asignatura",
+    shortLabel: "Registrar",
+    icon: BookPlus,
+    href: "/admin/registrar",
+  },
+  {
+    label: "Asignaturas registradas",
+    shortLabel: "Ver todas",
+    icon: LayoutDashboard,
+    href: "/admin/asignaturas",
+  },
+];
+const logout = async () => {
+  const response = await logoutAction();
+  return response;
+};
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -26,9 +44,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="font-semibold tracking-tight">UniReviews</span>
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Administrador</p>
+          <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            Administrador
+          </p>
           {NAV.map((item) => {
-            const active = pathname === item.href
+            const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
@@ -43,12 +63,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <item.icon className="size-4" />
                 {item.label}
               </Link>
-            )
+            );
           })}
         </nav>
         <div className="border-t p-3">
           <Link href="/login">
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground"
+              onClick={logout}
+            >
               <LogOut className="size-4" data-icon="inline-start" />
               Cerrar sesión
             </Button>
@@ -61,19 +85,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile nav */}
         <div className="flex gap-2 border-b bg-card px-4 py-3 md:hidden">
           {NAV.map((item) => {
-            const active = pathname === item.href
+            const active = pathname === item.href;
             return (
-              <Button key={item.href} asChild size="sm" variant={active ? "default" : "outline"}>
+              <Button
+                key={item.href}
+                size="sm"
+                variant={active ? "default" : "outline"}
+              >
                 <Link href={item.href}>
                   <item.icon className="size-4" data-icon="inline-start" />
                   {item.shortLabel}
                 </Link>
               </Button>
-            )
+            );
           })}
         </div>
         <main className="flex-1">{children}</main>
       </div>
     </div>
-  )
+  );
 }

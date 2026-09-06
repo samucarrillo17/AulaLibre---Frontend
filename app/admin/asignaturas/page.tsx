@@ -63,8 +63,8 @@ export default function AsignaturasPage() {
 
   const getcourse = async () => {
     const result = await getCoursesAction();
-    if (result.success && result.data) {
-      setCourses(result.data.data);
+    if (result.success && result.courses) {
+      setCourses(result.courses);
     }
   };
 

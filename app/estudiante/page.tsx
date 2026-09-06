@@ -18,6 +18,7 @@ import { StarRating } from "@/components/star-rating";
 
 import { Course, PaginatedCourses } from "../interfaces/course";
 import { getCoursesAction } from "@/server/courses/action";
+import { logoutAction } from "@/server/auth/action";
 
 export default function StudentPage() {
   const [courses, setCourses] = React.useState<Course[]>([]);
@@ -35,6 +36,11 @@ export default function StudentPage() {
     }
   };
 
+  const logout = async () => {
+    const response = await logoutAction();
+    return response
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-card/80 backdrop-blur">
@@ -46,7 +52,12 @@ export default function StudentPage() {
             <span className="font-semibold tracking-tight">Aula Libre</span>
           </div>
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={logout}
+            >
               <LogOut className="size-4" data-icon="inline-start" />
               Salir
             </Button>

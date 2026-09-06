@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { GraduationCap, Mail, Lock } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button"
@@ -13,12 +13,13 @@ import { useForm } from "react-hook-form"
 import toast from "react-hot-toast";
 import { loginAction } from "@/server/auth/action";
 import { LoginInput, loginSchema } from "@/app/schemas/auth-schema";
+import { getPostLoginRedirect } from "@/app/lib/helper";
 
 
 
 export function AuthForm() {
   const router = useRouter()
-  
+  const searchParams = useSearchParams();
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -43,7 +44,12 @@ export function AuthForm() {
         });
         return
       }
-      router.push("/estudiante");
+
+       const from = searchParams.get("from");
+       const target = getPostLoginRedirect(result.data.role, from);
+
+       router.push(target);
+       router.refresh();
     } catch (error) {
       return error;
     }

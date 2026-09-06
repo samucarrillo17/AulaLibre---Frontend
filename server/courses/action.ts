@@ -30,12 +30,17 @@ export async function findOneCourseAction(term: string) {
   }
 }
 
-export async function getCoursesAction(page = 1, limit = 10) {
+export async function getCoursesAction() {
   try {
-    const headers = await getAuthHeader();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) return { success: false, error: "No autenticado" };
+
     const { data } = await axios.get<PaginatedCourses>(`${API_URL}/course`, {
-      params: { page, limit },
-      headers,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
     });
     return { success: true, courses:data.data ,stats: data };
   } catch (error: unknown) {
@@ -50,25 +55,27 @@ export async function getCoursesAction(page = 1, limit = 10) {
   }
 }
 
-export async function createCourseAction(
-  facultyId: string,
-  name: string,
-) {
+
+export async function createCourseAction(facultyId: string, name: string) {
   try {
-    const headers = await getAuthHeader();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) return { success: false, error: "No autenticado" };
+
     const { data } = await axios.post<Course>(
-      `${API_URL}/course/${facultyId}`,
-      { name },
-      { headers },
+      `${process.env.API_URL}/api/course/${facultyId}`,
+      { name }, 
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
     );
+
     return { success: true, data };
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        error: error.response?.data?.message || "Error al crear la asignatura",
-      };
-    }
-    return { success: false, error: "Error de conexión con el servidor" };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.response?.data?.message || "Error al crear asignatura",
+    };
   }
 }
