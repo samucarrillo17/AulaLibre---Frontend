@@ -19,12 +19,19 @@ import {
 } from "@/app/interfaces/comments";
 import { getCommentsAction } from "@/server/comments/action";
 import { findOneCourseAction } from "@/server/courses/action";
+import { EditReviewDialog } from "@/components/edit-reviev-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { RemoveAlert } from "@/components/remove-dialog";
 
 export default function SubjectDetailPage() {
   const params = useParams<{ id: string }>();
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [dialogOpenReview, setDialogOpenReview] = React.useState(false);
+  const [dialogOpenEdit, setDialogOpenEdit] = React.useState(false);
+  const [dialogOpenDelete, setDialogOpenDelete] = React.useState(false);
+  const [editingId, setEditingId] = React.useState<string>("");
+  const [deleteId, setDeleteId] = React.useState<string>("");
+  const [editingComment, setEditingComment] = React.useState<ReviewInput>();
   const [comments, setComments] = React.useState<Comments[]>([]);
   const [stats, setStats] = React.useState<PaginatedComments>();
   const [course, setCourse] = React.useState<CourseComment>({
@@ -60,51 +67,58 @@ export default function SubjectDetailPage() {
     return `Hace ${years} ${years === 1 ? "año" : "años"}`;
   };
 
+  const loadData = React.useCallback(async () => {
+    if (!params?.id) return;
+    setLoading(true);
+
+    const [commentsResult, courseResult] = await Promise.all([
+      getCommentsAction(params.id),
+      findOneCourseAction(params.id),
+    ]);
+
+    if (commentsResult.success && commentsResult.comments) {
+      setComments(commentsResult.comments);
+      if (commentsResult.stats) setStats(commentsResult.stats);
+    }
+
+    if (courseResult.success && courseResult.data) {
+      setCourse(courseResult.data);
+    }
+
+    setLoading(false);
+  }, [params?.id]);
+
   React.useEffect(() => {
     let isMounted = true;
-
-    const loadData = async () => {
-      if (!params?.id) return;
-
-      setLoading(true);
-
-      const [commentsResult, courseResult] = await Promise.all([
-        getCommentsAction(params.id),
-        findOneCourseAction(params.id),
-      ]);
-
-      if (isMounted) {
-        if (commentsResult.success && commentsResult.comments) {
-          setComments(commentsResult.comments);
-          if (commentsResult.stats) setStats(commentsResult.stats);
-        }
-
-        if (courseResult.success && courseResult.data) {
-          setCourse(courseResult.data);
-        }
-
-        setLoading(false);
-      }
-    };
-
-    loadData();
-
+    if (isMounted) loadData();
     return () => {
       isMounted = false;
     };
-  }, [params?.id]);
+  }, [loadData]);
 
   function handleAdd() {
-    setEditingId(null);
-    setDialogOpen(true);
+    setEditingId("");
+    setDialogOpenReview(true);
   }
 
-  function handleEdit(id: string) {
-    setEditingId(id);
-    setDialogOpen(true);
+  function handleEdit(idComment: string, comment: Comments) {
+    setEditingId(idComment);
+    setDialogOpenEdit(true);
+    setEditingComment({
+      professor: comment.professorName,
+      rating: comment.rating,
+      reason: comment.reason,
+    });
   }
 
-  function handleSubmit(input: ReviewInput) {}
+  function handleDelete(idComment: string) {
+    setDeleteId(idComment);
+    setDialogOpenDelete(true);
+  }
+
+  function handleSubmit(input: ReviewInput) {
+    loadData()
+  }
 
   if (!course) {
     return (
@@ -185,38 +199,38 @@ export default function SubjectDetailPage() {
                 <CardContent className="flex flex-col gap-3 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-1">
-                      <span className="font-medium">Autor desconocido</span>
+                      <span className="font-medium">{c.professorName}</span>
+                      <StarRating value={c.rating} size={15} readOnly />
                     </div>
                     <span className="text-xs text-muted-foreground">
                       {timeAgo(c.createdAt)}
                     </span>
                   </div>
                   <p className="text-sm leading-relaxed text-foreground/90">
-                    {c.description}
+                    {c.reason}
                   </p>
-                  {/* <div className="flex items-center justify-between">
-                    {r.mine && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(r.id)}
-                        >
-                          <Pencil className="size-3.5" data-icon="inline-start" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          
-                        >
-                          <Trash2 className="size-3.5" data-icon="inline-start" />
-                          Eliminar
-                        </Button>
-                      </div>
-                    )}
-                  </div> */}
+
+                  {c.isOwner ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(c.id, c)}
+                      >
+                        <Pencil className="size-3.5" data-icon="inline-start" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        <Trash2 className="size-3.5" data-icon="inline-start" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             ))}
@@ -224,17 +238,29 @@ export default function SubjectDetailPage() {
         )}
       </main>
 
-      {/* <ReviewDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+      <ReviewDialog
+        open={dialogOpenReview}
+        onOpenChange={setDialogOpenReview}
         onSubmit={handleSubmit}
-        mode={editing ? "edit" : "create"}
-        initial={
-          editing
-            ? { professor: editing.professor, rating: editing.rating, reason: editing.reason }
-            : undefined
-        }
-      /> */}
+        params={params.id}
+      />
+
+      <EditReviewDialog
+        open={dialogOpenEdit}
+        onOpenChange={setDialogOpenEdit}
+        onSubmit={handleSubmit}
+        params={params.id}
+        initial={editingComment}
+        commentId={editingId}
+      />
+      
+      <RemoveAlert
+        open={dialogOpenDelete}
+        onOpenChange={setDialogOpenDelete}
+        params={params.id}
+        commentId={deleteId}
+        onSuccess={loadData} 
+      />
     </div>
   );
 }

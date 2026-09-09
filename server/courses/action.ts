@@ -64,7 +64,7 @@ export async function createCourseAction(facultyId: string, name: string) {
     if (!token) return { success: false, error: "No autenticado" };
 
     const { data } = await axios.post<Course>(
-      `${process.env.API_URL}/api/course/${facultyId}`,
+      `${process.env.API_URL}/course/${facultyId}`,
       { name }, 
       {
         headers: { Authorization: `Bearer ${token}` },

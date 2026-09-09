@@ -4,11 +4,11 @@ import { RegisterInput } from "@/app/schemas/auth-schema";
 import axios from "axios";
 import { cookies } from "next/headers";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
 
 export async function loginAction(email: string, password: string) {
   try {
-    const { data } = await axios.post(`${API_URL}/auth/login`, {
+    const { data } = await axios.post(`${process.env.API_URL}/auth/login`, {
       email,
       password,
     });
@@ -46,7 +46,7 @@ export async function registerAction(dataRegister: RegisterInput) {
     const { confirmPassword, ...registerDto } = dataRegister;
 
     const { data } = await axios.post(
-      `${process.env.API_URL}/api/auth/register`,
+      `${process.env.API_URL}/auth/register`,
       registerDto,
     );
 

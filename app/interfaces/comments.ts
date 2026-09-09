@@ -12,7 +12,10 @@ export interface Faculty{
 
 export interface Comments {
   id: string;
-  description: string;
+  professorName: string;
+  rating: number;
+  reason: string;
+  isOwner?:boolean
   createdAt: Date;
   course: CourseComment;
 }

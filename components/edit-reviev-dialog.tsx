@@ -4,6 +4,7 @@ import * as React from "react";
 import { ShieldCheck } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +20,10 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { StarRating } from "@/components/star-rating";
 import {
-  CreateCommentInput,
-  createCommentSchema,
+  UpdateCommentInput,
+  updateCommentSchema,
 } from "@/app/schemas/comment-schema";
-import { createCommentAction } from "@/server/comments/action";
-import toast from "react-hot-toast";
-import { Comments } from "@/app/interfaces/comments";
+import { updateCommentAction } from "@/server/comments/action";
 import { useRouter } from "next/navigation";
 
 export type ReviewInput = {
@@ -33,30 +32,30 @@ export type ReviewInput = {
   reason: string;
 };
 
-
-
-type ReviewDialogProps = {
+type EditReviewDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit?: (input: ReviewInput) => void;
   initial?: ReviewInput;
   params: string;
- 
+  commentId: string;
+  
 };
 
-export function ReviewDialog({
+export function EditReviewDialog({
   open,
   onOpenChange,
   onSubmit,
   initial,
   params,
-}: ReviewDialogProps) {
-  const form = useForm<CreateCommentInput>({
-    resolver: zodResolver(createCommentSchema),
+  commentId,
+}: EditReviewDialogProps) {
+  const form = useForm<UpdateCommentInput>({
+    resolver: zodResolver(updateCommentSchema),
     defaultValues: {
-      professorName: "",
-      rating: 0,
-      reason: "",
+      professorName: initial?.professor ?? "",
+      rating: initial?.rating ?? 0,
+      reason: initial?.reason ?? "",
     },
   });
   const router = useRouter();
@@ -68,34 +67,38 @@ export function ReviewDialog({
     formState: { isSubmitting, errors },
   } = form;
 
-  // Sincroniza los valores iniciales con el formulario cuando se abre el modal
   React.useEffect(() => {
-    if (open) {
+    if (open && initial) {
       reset({
-        professorName: initial?.professor ?? "",
-        rating: initial?.rating ?? 0,
-        reason: initial?.reason ?? "",
+        professorName: initial.professor ?? "",
+        rating: initial.rating ?? 0,
+        reason: initial.reason ?? "",
       });
     }
   }, [open, initial, reset]);
 
-  async function onSubmitForm(values: CreateCommentInput) {
+  async function onSubmitForm(values: UpdateCommentInput) {
     try {
-      const result = await createCommentAction(params, values);
+   
+      const result = await updateCommentAction(commentId, values, params);
 
-      if (result.success) {
-        onOpenChange(false);
-        onSubmit?.({
-          professor: values.professorName,
-          rating: values.rating,
-          reason: values.reason,
-        });
+      if (!result?.success) {
+        toast.error(result?.error || "Error al actualizar la reseña");
+        return;
       }
-      toast.success("Comentario creado exitosamente");
-      router.refresh(); // Refresca la página para mostrar el nuevo comentario
+
+      toast.success("Reseña actualizada exitosamente");
+      onOpenChange(false);
+
+      router.refresh(); // Refresca la página para mostrar el comentario actualizado
+      onSubmit?.({
+        professor: values.professorName ?? "",
+        rating: values.rating ?? 0,
+        reason: values.reason ?? "",
+      });
     } catch (error) {
-      console.error("Error al crear el comentario:", error);
-      toast.error("Error al crear el comentario");
+      console.error("Error al actualizar el comentario:", error);
+      toast.error("Ocurrió un error inesperado al actualizar");
     }
   }
 
@@ -103,15 +106,12 @@ export function ReviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            Publicar reseña
-          </DialogTitle>
+          <DialogTitle>Editar reseña</DialogTitle>
           <DialogDescription>
-            Comparte tu experiencia para ayudar a otros estudiantes.
+            Modifica los datos de tu experiencia con la asignatura.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Reglas de la comunidad */}
         <div className="flex gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="flex flex-col gap-1 text-sm">
@@ -119,15 +119,13 @@ export function ReviewDialog({
               Normas de la comunidad
             </span>
             <p className="text-muted-foreground">
-              Sé respetuoso. No se permiten insultos, ataques personales ni
-              lenguaje ofensivo. Enfócate en la asignatura y en la enseñanza.
+              Sé respetuoso. Tu edición debe mantener un lenguaje constructivo.
             </p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmitForm)}>
           <FieldGroup className="space-y-4">
-            {/* Campo: Nombre del profesor */}
             <Field>
               <FieldLabel htmlFor="professor">Nombre del profesor</FieldLabel>
               <Input
@@ -142,7 +140,7 @@ export function ReviewDialog({
               )}
             </Field>
 
-            {/* Campo: Calificación (Uso de Controller) */}
+            {/* Solución Error 1: Fallback (field.value ?? 0) */}
             <Field>
               <FieldLabel>Calificación</FieldLabel>
               <Controller
@@ -150,7 +148,7 @@ export function ReviewDialog({
                 control={control}
                 render={({ field }) => (
                   <StarRating
-                    value={field.value}
+                    value={field.value ?? 0}
                     onChange={field.onChange}
                     size={28}
                   />
@@ -163,7 +161,6 @@ export function ReviewDialog({
               )}
             </Field>
 
-            {/* Campo: Razones */}
             <Field>
               <FieldLabel htmlFor="reason">
                 Razones de tu calificación
@@ -171,7 +168,7 @@ export function ReviewDialog({
               <Textarea
                 id="reason"
                 rows={4}
-                placeholder="Describe tu experiencia con la asignatura y el profesor..."
+                placeholder="Describe tu experiencia..."
                 {...register("reason")}
               />
               {errors.reason && (
@@ -191,7 +188,7 @@ export function ReviewDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando...":"Publicar"}
+                {isSubmitting ? "Guardando..." : "Guardar cambios"}
               </Button>
             </DialogFooter>
           </FieldGroup>

@@ -105,8 +105,8 @@ export default function StudentPage() {
                         {s.faculty.name}
                       </Badge>
                     </div>
-                    {/* <div className="flex flex-col items-end gap-1">
-                      {stats.count > 0 ? (
+                    <div className="flex flex-col items-end gap-1">
+                      {/* {stats?.count > 0 ? (
                         <>
                           <StarRating value={Math.round(stats.avg)} size={16} readOnly />
                           <span className="text-xs text-muted-foreground">
@@ -115,8 +115,8 @@ export default function StudentPage() {
                         </>
                       ) : (
                         <span className="text-xs text-muted-foreground">Sin reseñas</span>
-                      )}
-                    </div> */}
+                      )} */}
+                    </div>
                   </CardContent>
                 </Card>
               </Link>

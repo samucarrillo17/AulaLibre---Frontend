@@ -4,7 +4,7 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import { Faculty } from "@/app/interfaces/faculty";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
 
 async function getAuthHeader() {
   const cookieStore = await cookies();
@@ -16,7 +16,7 @@ export async function createFacultyAction(name: string) {
   try {
     const headers = await getAuthHeader();
     const { data } = await axios.post<Faculty>(
-      `${API_URL}/faculty`,
+      `${process.env.API_URL}/faculty`,
       { name },
       { headers },
     );
@@ -35,7 +35,7 @@ export async function createFacultyAction(name: string) {
 export async function getFacultieAction() {
   try {
     const headers = await getAuthHeader();
-    const { data } = await axios.get<Faculty[]>(`${API_URL}/faculty`, {
+    const { data } = await axios.get<Faculty[]>(`${process.env.API_URL}/faculty`, {
       headers,
     });
     return { success: true, data };
