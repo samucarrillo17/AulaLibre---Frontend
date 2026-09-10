@@ -70,7 +70,7 @@ export default function AdminLayout({
           <Link href="/login">
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground"
+              className="w-full justify-start text-muted-foreground cursor-pointer"
               onClick={logout}
             >
               <LogOut className="size-4" data-icon="inline-start" />

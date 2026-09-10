@@ -180,6 +180,7 @@ export function EditReviewDialog({
 
             <DialogFooter className="mt-4">
               <Button
+                className="cursor-pointer"
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -187,7 +188,11 @@ export function EditReviewDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                className="cursor-pointer"
+                type="submit"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Guardando..." : "Guardar cambios"}
               </Button>
             </DialogFooter>

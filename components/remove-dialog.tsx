@@ -18,7 +18,7 @@ type RemoveAlertProps = {
   onOpenChange: (open: boolean) => void;
   params: string;
   commentId: string;
-  onSuccess?: () => void; // 👈 nuevo
+  onSuccess?: () => void; 
 };
 
 export function RemoveAlert({
@@ -39,7 +39,7 @@ export function RemoveAlert({
 
       toast.success("Comentario eliminado exitosamente");
       onOpenChange(false);
-      onSuccess?.(); // 👈 avisa al padre para que refetch
+      onSuccess?.(); 
     } catch (error) {
       console.error("Error al eliminar el comentario:", error);
       toast.error("Ocurrió un error inesperado al eliminar");

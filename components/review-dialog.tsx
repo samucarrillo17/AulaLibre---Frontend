@@ -103,9 +103,7 @@ export function ReviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            Publicar reseña
-          </DialogTitle>
+          <DialogTitle>Publicar reseña</DialogTitle>
           <DialogDescription>
             Comparte tu experiencia para ayudar a otros estudiantes.
           </DialogDescription>
@@ -127,7 +125,7 @@ export function ReviewDialog({
 
         <form onSubmit={handleSubmit(onSubmitForm)}>
           <FieldGroup className="space-y-4">
-            {/* Campo: Nombre del profesor */}
+          
             <Field>
               <FieldLabel htmlFor="professor">Nombre del profesor</FieldLabel>
               <Input
@@ -142,7 +140,7 @@ export function ReviewDialog({
               )}
             </Field>
 
-            {/* Campo: Calificación (Uso de Controller) */}
+            
             <Field>
               <FieldLabel>Calificación</FieldLabel>
               <Controller
@@ -163,7 +161,7 @@ export function ReviewDialog({
               )}
             </Field>
 
-            {/* Campo: Razones */}
+        
             <Field>
               <FieldLabel htmlFor="reason">
                 Razones de tu calificación
@@ -183,6 +181,7 @@ export function ReviewDialog({
 
             <DialogFooter className="mt-4">
               <Button
+                className="cursor-pointer"
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -190,8 +189,12 @@ export function ReviewDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando...":"Publicar"}
+              <Button
+                className="cursor-pointer"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Guardando..." : "Publicar"}
               </Button>
             </DialogFooter>
           </FieldGroup>

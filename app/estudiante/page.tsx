@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StarRating } from "@/components/star-rating";
-
 import { Course, PaginatedCourses } from "../interfaces/course";
 import { getCoursesAction } from "@/server/courses/action";
 import { logoutAction } from "@/server/auth/action";
@@ -23,18 +21,36 @@ import { logoutAction } from "@/server/auth/action";
 export default function StudentPage() {
   const [courses, setCourses] = React.useState<Course[]>([]);
   const [stats, setStats] = React.useState<PaginatedCourses>();
+  const [page, setPage] = React.useState<number>(1);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [query, setQuery] = React.useState("");
 
-  React.useEffect(() => {
-    getCourses();
-  }, []);
 
-  const getCourses = async () => {
-    const result = await getCoursesAction();
+  
+  const getCourses = React.useCallback(async (currentPage: number) => {
+    setLoading(true);
+    const result = await getCoursesAction(currentPage);
+
     if (result.success && result.courses && result.stats) {
       setCourses(result.courses);
       setStats(result.stats);
     }
-  };
+    setLoading(false);
+  }, []);
+
+ 
+  React.useEffect(() => {
+    getCourses(page);
+  }, [page, getCourses]);
+
+  const filtered = React.useMemo(():Course[] => {
+    const q = query.trim().toLowerCase();
+    if (!q) return courses;
+    return courses.filter( 
+      (c) =>
+        c.name.toLowerCase().includes(q),
+    );
+  }, [courses, query]);
 
   const logout = async () => {
     const response = await logoutAction();
@@ -55,7 +71,7 @@ export default function StudentPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground"
+              className="text-muted-foreground cursor-pointer"
               onClick={logout}
             >
               <LogOut className="size-4" data-icon="inline-start" />
@@ -80,9 +96,11 @@ export default function StudentPage() {
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
+            value={query}
             placeholder="Buscar por nombre o facultad..."
             className="h-11 pl-9"
             aria-label="Buscar asignatura"
+            onChange={(e)=> setQuery(e.target.value)}
           />
         </div>
 
@@ -94,28 +112,30 @@ export default function StudentPage() {
         </p>
 
         <div className="mt-3 flex flex-col gap-3">
-          {courses.map((s) => {
+          {filtered.map((c) => {
             return (
-              <Link key={s.id} href={`/materia/${s.id}`} className="group">
+              <Link key={c.id} href={`/materia/${c.id}`} className="group">
                 <Card className="transition-colors group-hover:border-primary/40">
                   <CardContent className="flex items-center justify-between gap-4 py-4">
                     <div className="flex flex-col gap-1.5">
-                      <span className="font-medium">{s.name}</span>
+                      <span className="font-medium">{c.name}</span>
                       <Badge variant="secondary" className="w-fit">
-                        {s.faculty.name}
+                        {c.faculty.name}
                       </Badge>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      {/* {stats?.count > 0 ? (
+                      {c.commentsCount > 0 ? (
                         <>
-                          <StarRating value={Math.round(stats.avg)} size={16} readOnly />
                           <span className="text-xs text-muted-foreground">
-                            {stats.avg.toFixed(1)} · {stats.count} reseña{stats.count > 1 ? "s" : ""}
+                            {c.commentsCount} reseña
+                            {c.commentsCount > 1 ? "s" : ""}
                           </span>
                         </>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Sin reseñas</span>
-                      )} */}
+                        <span className="text-xs text-muted-foreground">
+                          Sin reseñas
+                        </span>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -129,32 +149,35 @@ export default function StudentPage() {
             </div>
           )}
 
-          {/* Pagination */}
-          {/* {stats?.total > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="size-4" data-icon="inline-start" />
-              Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {currentPage} de {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Siguiente
-              <ChevronRight className="size-4" data-icon="inline-end" />
-            </Button>
-          </div>
-        )}  */}
+          {stats && stats.lastPage > 1 && (
+            <div className="mt-6 flex items-center justify-between">
+              <Button
+                className="cursor-pointer"
+                variant="outline"
+                size="sm"
+                disabled={stats.page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="size-4" data-icon="inline-start" />
+                Anterior
+              </Button>
+
+              <span className="text-sm text-muted-foreground">
+                Página {stats.page} de {stats.lastPage}
+              </span>
+
+              <Button
+                className="cursor-pointer"
+                variant="outline"
+                size="sm"
+                disabled={stats.page >= stats.lastPage || loading}
+                onClick={() => setPage((p) => Math.min(stats.lastPage, p + 1))}
+              >
+                Siguiente
+                <ChevronRight className="size-4" data-icon="inline-end" />
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>

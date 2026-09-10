@@ -1,8 +1,7 @@
 "use client";
-import { Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,15 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Table,
   TableBody,
@@ -28,44 +19,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
-import { useEffect, useState } from "react";
-import { Course } from "@/app/interfaces/course";
+import { useCallback, useEffect, useState } from "react";
+import { Course, PaginatedCourses } from "@/app/interfaces/course";
 import { Label } from "@/components/ui/label";
 import { getCoursesAction } from "@/server/courses/action";
+import { EditCourseDialog } from "@/components/edit-course-dialog";
+import RemoveAlertCourse from "@/components/remove-alert-course";
 
 export default function AsignaturasPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [courseSelected, setCourseSelected] = useState<Course>();
+  const [stats, setStats] = useState<PaginatedCourses>();
+  const [page, setPage] = useState<number>(1);
+
+  const loadData = useCallback(
+    async (currentPage: number) => {
+      const result = await getCoursesAction(currentPage);
+      if (result.success && result.courses) {
+        setCourses(result.courses);
+        setStats(result.stats);
+      }
+    },
+    [openEditDialog, openDeleteAlert],
+  );
 
   useEffect(() => {
-    getcourse();
-  }, []);
+    loadData(page);
+  }, [page, loadData]);
 
-  const getcourse = async () => {
-    const result = await getCoursesAction();
-    if (result.success && result.courses) {
-      setCourses(result.courses);
-    }
+  const handleEditCourse = (course: Course) => {
+    setCourseSelected(course);
+    setOpenEditDialog(true);
+  };
+
+  const handleDeleteCourse = (course: Course) => {
+    setCourseSelected(course);
+    setOpenDeleteAlert(true);
   };
 
   return (
@@ -112,17 +104,21 @@ export default function AsignaturasPage() {
                       <TableCell>
                         <div className="flex justify-end gap-1">
                           <Button
+                            className="cursor-pointer"
                             variant="ghost"
                             size="icon-sm"
                             aria-label={`Editar ${course.name}`}
+                            onClick={() => handleEditCourse(course)}
                           >
                             <Pencil className="size-4" />
                           </Button>
                           <Button
+                            
                             variant="ghost"
                             size="icon-sm"
                             aria-label={`Eliminar ${course.name}`}
-                            className="text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive cursor-pointer"
+                            onClick={() => handleDeleteCourse(course)}
                           >
                             <Trash2 className="size-4" />
                           </Button>
@@ -133,73 +129,59 @@ export default function AsignaturasPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {stats && stats.lastPage > 1 && (
+              <div className="mt-6 flex items-center justify-between">
+                <Button
+                  className="cursor-pointer"
+                  variant="outline"
+                  size="sm"
+                  disabled={stats.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="size-4" data-icon="inline-start" />
+                  Anterior
+                </Button>
+
+                <span className="text-sm text-muted-foreground">
+                  Página {stats.page} de {stats.lastPage}
+                </span>
+
+                <Button
+                  className="cursor-pointer"
+                  variant="outline"
+                  size="sm"
+                  disabled={stats.page >= stats.lastPage}
+                  onClick={() =>
+                    setPage((p) => Math.min(stats.lastPage, p + 1))
+                  }
+                >
+                  Siguiente
+                  <ChevronRight className="size-4" data-icon="inline-end" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Edit dialog */}
-      <Dialog>
-        <form>
-          <DialogTrigger
-            render={<Button variant="outline">Open Dialog</Button>}
-          />
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you&apos;re
-                done.
-              </DialogDescription>
-            </DialogHeader>
-            <FieldGroup>
-              <Field>
-                <Label htmlFor="name-1">Name</Label>
-                <Input id="name-1" name="name" defaultValue="Pedro Duarte" />
-              </Field>
-              <Field>
-                <Label htmlFor="username-1">Username</Label>
-                <Input
-                  id="username-1"
-                  name="username"
-                  defaultValue="@peduarte"
-                />
-              </Field>
-            </FieldGroup>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline">Cancel</Button>} />
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </form>
-      </Dialog>
+      <EditCourseDialog
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+        courseSelected={courseSelected!}
+        onSuccess={loadData}
+        page={page}
+      />
 
-      {/* Delete confirmation
-       <AlertDialog
-        open={!!deleting}
-        onOpenChange={(open) => !open && setDeleting(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar esta asignatura?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Se eliminará &quot;{deleting?.name}&quot; junto con sus reseñas.
-              Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                if (deleting) deleteSubject(deleting.id);
-                setDeleting(null);
-              }}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
+      {/* Remove alert */}
+      <RemoveAlertCourse
+        open={openDeleteAlert}
+        onOpenChange={setOpenDeleteAlert}
+        courseSelected={courseSelected!}
+        onSuccess={loadData}
+        page={page}
+      />
     </>
   );
 }

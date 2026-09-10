@@ -180,7 +180,7 @@ export function RegisterForm() {
                     </FieldDescription>
                   )}
                 </Field>
-                <Button type="submit" className="w-full">
+                <Button  type="submit" className="w-full cursor-pointer">
                   Registrarse
                 </Button>
               </FieldGroup>

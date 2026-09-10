@@ -8,6 +8,7 @@ export interface Course {
   id: string;
   name: string;
   faculty: Faculty;
+  commentsCount:number
 }
 
 

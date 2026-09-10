@@ -165,7 +165,9 @@ export default function RegistrarPage() {
                   )}
                 </Field>
 
-                <Button type="submit">Registrar asignatura</Button>
+                <Button className="cursor-pointer" type="submit">
+                  Registrar asignatura
+                </Button>
               </FieldGroup>
             </form>
           </CardContent>
@@ -194,7 +196,9 @@ export default function RegistrarPage() {
                     </FieldError>
                   )}
                 </Field>
-                <Button type="submit">Registrar facultad</Button>
+                <Button className="cursor-pointer" type="submit">
+                  Registrar facultad
+                </Button>
               </FieldGroup>
             </form>
           </CardContent>

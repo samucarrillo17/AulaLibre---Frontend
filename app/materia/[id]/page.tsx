@@ -20,7 +20,6 @@ import {
 import { getCommentsAction } from "@/server/comments/action";
 import { findOneCourseAction } from "@/server/courses/action";
 import { EditReviewDialog } from "@/components/edit-reviev-dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { RemoveAlert } from "@/components/remove-dialog";
 
 export default function SubjectDetailPage() {
@@ -69,7 +68,7 @@ export default function SubjectDetailPage() {
 
   const loadData = React.useCallback(async () => {
     if (!params?.id) return;
-    setLoading(true);
+    
 
     const [commentsResult, courseResult] = await Promise.all([
       getCommentsAction(params.id),
@@ -85,7 +84,7 @@ export default function SubjectDetailPage() {
       setCourse(courseResult.data);
     }
 
-    setLoading(false);
+    
   }, [params?.id]);
 
   React.useEffect(() => {
@@ -125,7 +124,9 @@ export default function SubjectDetailPage() {
       <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-muted-foreground">Esta asignatura no existe.</p>
         <Link href="/estudiante">
-          <Button variant="outline">Volver a las asignaturas</Button>
+          <Button className="cursor-pointer" variant="outline">
+            Volver a las asignaturas
+          </Button>
         </Link>
       </main>
     );
@@ -136,7 +137,12 @@ export default function SubjectDetailPage() {
       <header className="sticky top-0 z-10 border-b bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <Link href="/estudiante">
-            <Button variant="ghost" size="icon-sm" aria-label="Volver">
+            <Button
+              className="cursor-pointer"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Volver"
+            >
               <ArrowLeft className="size-4" />
             </Button>
           </Link>
@@ -157,21 +163,14 @@ export default function SubjectDetailPage() {
               {course.faculty.name || "..."}
             </Badge>
           </div>
-          {/* <div className="flex items-center gap-3">
-            <StarRating value={Math.round(avg)} size={20} readOnly />
-            <span className="text-sm text-muted-foreground">
-              {reviews.length > 0
-                ? `${avg.toFixed(1)} · ${reviews.length} reseña${reviews.length > 1 ? "s" : ""}`
-                : "Aún sin reseñas"}
-            </span>
-          </div> */}
+          
         </div>
 
         <div className="mt-6 flex items-center justify-between">
           <h2 className="text-base font-semibold">
             Comentarios y recomendaciones
           </h2>
-          <Button size="sm" onClick={handleAdd}>
+          <Button className="cursor-pointer" size="sm" onClick={handleAdd}>
             <Plus className="size-4" data-icon="inline-start" />
             Agregar
           </Button>
@@ -213,6 +212,7 @@ export default function SubjectDetailPage() {
                   {c.isOwner ? (
                     <div className="flex items-center gap-1">
                       <Button
+                        className="cursor-pointer"
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(c.id, c)}
@@ -221,9 +221,10 @@ export default function SubjectDetailPage() {
                         Editar
                       </Button>
                       <Button
+                        
                         variant="ghost"
                         size="sm"
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive cursor-pointer"
                         onClick={() => handleDelete(c.id)}
                       >
                         <Trash2 className="size-3.5" data-icon="inline-start" />
@@ -253,13 +254,13 @@ export default function SubjectDetailPage() {
         initial={editingComment}
         commentId={editingId}
       />
-      
+
       <RemoveAlert
         open={dialogOpenDelete}
         onOpenChange={setDialogOpenDelete}
         params={params.id}
         commentId={deleteId}
-        onSuccess={loadData} 
+        onSuccess={loadData}
       />
     </div>
   );
